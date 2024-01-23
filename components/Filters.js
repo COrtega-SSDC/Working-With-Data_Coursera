@@ -5,6 +5,7 @@ const Filters = ({ onChange, selections, sections }) => {
     <View style={styles.filtersContainer}>
       {sections.map((section, index) => (
         <TouchableOpacity
+          key={index}
           onPress={() => {
             onChange(index);
           }}
