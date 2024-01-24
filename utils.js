@@ -44,21 +44,27 @@ export function getSectionListData(data) {
   // The title of each section should be the category.
   // The data property should contain an array of menu items. 
   // Each item has the following properties: "id", "title" and "price"
+  if (!Array.isArray(data)) {
+    // If data is not an array, log an error and return an empty array
+    console.error('Invalid data type for getSectionListData, expected an array:', data);
+    return [];
+  }
+
   const groupedByCategory = data.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
+    // Ensure the category exists on the accumulator and is an array
+    const category = item.category || 'Uncategorized';
+    if (!acc[category]) {
+      acc[category] = [];
     }
-    acc[item.category].push({ id: item.id, title: item.title, price: item.price });
+    acc[category].push({ id: item.id.toString(), title: item.title, price: item.price.toString() });
     return acc;
   }, {});
 
-  const newData = Object.keys(groupedByCategory).map(category => ({
+  return Object.keys(groupedByCategory).map(category => ({
     title: category,
     data: groupedByCategory[category]
   }));
-  SECTION_LIST_MOCK_DATA = newData;
-
-  return SECTION_LIST_MOCK_DATA;
+  // return SECTION_LIST_MOCK_DATA;
 }
 
 export function useUpdateEffect(effect, dependencies = []) {

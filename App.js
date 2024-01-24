@@ -38,50 +38,52 @@ export default function App() {
     sections.map(() => false)
   );
 
-  const fetchData = async() => {
+  const fetchData = async () => {
     // 1. Implement this function
-    
+
     // Fetch the menu from the API_URL endpoint. You can visit the API_URL in your browser to inspect the data returned
     // The category field comes as an object with a property called "title". You just need to get the title value and set it under the key "category".
     // So the server response should be slighly transformed in this function (hint: map function) to flatten out each menu item in the array,
     try {
-      const response = await fetch(API_URL)
+
+      const response = await fetch(API_URL);
       const json = await response.json();
 
-      const titles = json.menu.map(item => {
-        return {
-          ...item,
-          category: item.category.title 
-        }
-      })
+      const menuItems = json.menu.map(item => ({
+        ...item,
+        category: item.category.title
+      }));
 
-      setData(titles);
-      return titles;
+      setData(menuItems);
+      return menuItems;
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error fetching data');
+      return []; // Return an empty array in case of an error
     }
-    catch (error) {
-      console.log(error)
-    }    
-    return [];
   }
 
   useEffect(() => {
     (async () => {
       try {
         await createTable();
-        let menuItems = await getMenuItems();
+        let menuItemsFromDB = await getMenuItems();
+        console.log('Menu items from DB:', menuItemsFromDB);
 
-        // The application only fetches the menu data once from a remote URL
-        // and then stores it into a SQLite database.
-        // After that, every application restart loads the menu from the database
-        if (!menuItems.length) {
-          const menuItems = await fetchData();
-          saveMenuItems(menuItems);
+        if (menuItemsFromDB.length === 0) {
+          console.log('No items found in DB, fetching from API...');
+          const fetchedMenuItems = await fetchData();
+          await saveMenuItems(fetchedMenuItems);
+          menuItemsFromDB = await getMenuItems(); // Re-fetch from DB to ensure they are saved
         }
 
-        const sectionListData = getSectionListData(menuItems);
+        console.log('Preparing section list data...');
+        const sectionListData = getSectionListData(menuItemsFromDB);
+        console.log('Section list data:', sectionListData);
         setData(sectionListData);
       } catch (e) {
-        // Handle error
+        console.error('Error in useEffect:', e);
         Alert.alert(e.message);
       }
     })();

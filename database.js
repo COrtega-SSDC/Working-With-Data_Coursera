@@ -18,25 +18,45 @@ export async function createTable() {
 }
 
 export async function getMenuItems() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql('select * from menuitems', [], (_, { rows }) => {
-        resolve(rows._array);
+        console.log('Retrieved items from DB:', rows._array);
+        resolve(rows._array || []); // Ensure an array is returned
+      },
+      (_, error) => {
+        console.error("Error in getMenuItems:", error);
+        reject(error); // Make sure to handle the error
       });
     });
   });
 }
 
 export function saveMenuItems(menuItems) {
-  db.transaction((tx) => {
-    // 2. Implement a single SQL statement to save all menu data in a table called menuitems.
-    // Check the createTable() function above to see all the different columns the table has
-    // Hint: You need a SQL statement to insert multiple rows at once.
-    tx.executeSql(`insert into menuitems(uuid, title, price, category) values ${
-      menuItems.map((item) =>
-        `('${item.id}', '${item.title}', '${item.price}', '${item.category}')`)
-        .join(', ')
-    }`);
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      menuItems.forEach(item => {
+        tx.executeSql(
+          'insert into menuitems (uuid, title, price, category) values (?, ?, ?, ?)',
+          [item.uuid, item.title, item.price, item.category],
+          () => {
+            console.log(`Item ${item.uuid} saved to the database`);
+          },
+          (_, error) => {
+            console.error('Error saving menu item to the database:', error);
+            reject(error);
+          }
+        );
+      });
+    },
+    (error) => {
+      console.error('Transaction error:', error);
+      reject(error);
+    },
+    () => {
+      console.log('All menu items saved to the database.');
+      resolve();
+    });
   });
 }
 
@@ -62,6 +82,26 @@ export function saveMenuItems(menuItems) {
  */
 export async function filterByQueryAndCategories(query, activeCategories) {
   return new Promise((resolve, reject) => {
-    resolve(SECTION_LIST_MOCK_DATA);
+    // Construct the SQL query with placeholders for parameters
+    let sql = 'SELECT * FROM menuitems WHERE title LIKE ?';
+    let params = [`%${query}%`]; // '%' is a wildcard in SQL LIKE
+
+    // If there are active categories to filter by
+    if (activeCategories.length > 0) {
+      sql += ' AND category IN (' + activeCategories.map(() => '?').join(',') + ')';
+      params = params.concat(activeCategories);
+    }
+
+    // Execute the transaction
+    db.transaction((tx) => {
+      tx.executeSql(sql, params, (_, { rows }) => {
+          resolve(rows._array);
+        },
+        (_, error) => {
+          console.error('Error filtering menu items:', error);
+          reject(error);
+        }
+      );
+    });
   });
 }
