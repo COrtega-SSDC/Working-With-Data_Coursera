@@ -1,37 +1,37 @@
 import { useRef, useEffect } from 'react';
 
 export const SECTION_LIST_MOCK_DATA = [
-    {
-      title: 'Appetizers',
-      data: [
-        {
-          id: '1',
-          title: 'Pasta',
-          price: '10',
-        },
-        {
-          id: '3',
-          title: 'Pizza',
-          price: '8',
-        },
-      ],
-    },
-    {
-      title: 'Salads',
-      data: [
-        {
-          id: '2',
-          title: 'Caesar',
-          price: '2',
-        },
-        {
-          id: '4',
-          title: 'Greek',
-          price: '3',
-        },
-      ],
-    },
-  ];
+  {
+    title: 'Appetizers',
+    data: [
+      {
+        id: '1',
+        title: 'Pasta',
+        price: '10',
+      },
+      {
+        id: '3',
+        title: 'Pizza',
+        price: '8',
+      },
+    ],
+  },
+  {
+    title: 'Salads',
+    data: [
+      {
+        id: '2',
+        title: 'Caesar',
+        price: '2',
+      },
+      {
+        id: '4',
+        title: 'Greek',
+        price: '3',
+      },
+    ],
+  },
+];
 
 /**
  * 3. Implement this function to transform the raw data
@@ -44,6 +44,20 @@ export function getSectionListData(data) {
   // The title of each section should be the category.
   // The data property should contain an array of menu items. 
   // Each item has the following properties: "id", "title" and "price"
+  const groupedByCategory = data.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push({ id: item.id, title: item.title, price: item.price });
+    return acc;
+  }, {});
+
+  const newData = Object.keys(groupedByCategory).map(category => ({
+    title: category,
+    data: groupedByCategory[category]
+  }));
+  SECTION_LIST_MOCK_DATA = newData;
+
   return SECTION_LIST_MOCK_DATA;
 }
 
